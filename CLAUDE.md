@@ -16,9 +16,10 @@ Keep this file to cross-cutting concerns. Everything else has a home:
   [`iosApp/CLAUDE.md`](iosApp/CLAUDE.md). Claude Code loads these automatically when working on files in
   that directory. When you learn something about a single module, add it there.
 - **This file** — the module split, shared tooling, and version pins that span more than one module.
-- **`CLAUDE.local.md`** — machine-specific setup: local SDK/toolchain paths, simulator and emulator device
-  names, run commands. Git-ignored and personal to one developer, so never put anything a teammate would
-  need in it.
+
+Machine-specific setup — local SDK and toolchain paths, simulator and emulator device names — is personal
+and stays out of version control entirely. Keep it in a git-ignored file of your own rather than in any
+file committed here.
 
 ## Commands
 
@@ -32,7 +33,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 - Compile the iOS framework only (no Xcode): `./gradlew :composeApp:linkDebugFrameworkIosSimulatorArm64`
 - Build the iOS app via CLI: `cd iosApp && xcodebuild -project iosApp.xcodeproj -scheme iosApp -configuration Debug -destination 'generic/platform=iOS Simulator' build`
 
-Running on a simulator or emulator depends on locally created devices — see `CLAUDE.local.md`.
+Running on a simulator or emulator additionally depends on devices created locally on each machine.
 
 There is no test suite yet.
 
