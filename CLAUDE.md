@@ -61,6 +61,10 @@ Dependency versions are centralized in `gradle/libs.versions.toml` (version cata
   `org.jetbrains.kotlin.android` — adding it back will fail the build ("no longer required since AGP 9.0").
 - **Gradle 9.7.1** (required by AGP 9.x).
 - **Compose Multiplatform 1.12.0**, **Kotlin 2.4.10**, **compileSdk/targetSdk 37**, **minSdk 26**.
+- **Xcode 26.6** is the stable version development targets — build and verify iOS against it rather than
+  whatever happens to be selected. Deployment target is **iOS 15.3**, and the simulator SDK excludes
+  `x86_64` (Apple silicon only); see `iosApp/CLAUDE.md`. Where Xcode 26.6 is *installed*, and how it is
+  selected on a given machine, is machine-specific — keep that in your git-ignored local file.
 - Several dependencies are pinned to each other rather than to "latest" — maplibre-compose, navigation, and
   lifecycle in particular. See `composeApp/CLAUDE.md` before bumping any of them.
 - `org.gradle.jvmargs`/`kotlin.daemon.jvmargs` are at **6 GB**: linking the release iOS framework against
