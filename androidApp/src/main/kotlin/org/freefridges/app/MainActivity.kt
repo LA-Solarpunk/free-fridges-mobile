@@ -9,12 +9,14 @@ import androidx.activity.enableEdgeToEdge
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The map draws under the status bar, so force dark status-bar icons — the
-        // default light icons are unreadable over the (always light) map style.
-        // Revisit if a dark map style is ever added.
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
-        )
+        // Both bars are drawn on by the app — the map runs under the status bar, and the
+        // Material NavigationBar runs under the navigation bar — so keep them fully
+        // transparent (no scrim) and let SystemBarStyle.auto pick the icon tint from the
+        // night-mode configuration. That is the same signal FreeFridgesTheme follows via
+        // isSystemInDarkTheme(), so the icons always contrast with what's behind them.
+        // The activity is recreated on a night-mode change, so this re-runs.
+        val transparent = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+        enableEdgeToEdge(statusBarStyle = transparent, navigationBarStyle = transparent)
         super.onCreate(savedInstanceState)
         setContent {
             App(isDebugBuild = BuildConfig.DEBUG)

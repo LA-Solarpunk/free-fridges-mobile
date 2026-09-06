@@ -13,7 +13,7 @@ import org.jetbrains.compose.resources.DrawableResource
  * release builds — see `App(isDebugBuild)`.
  */
 enum class TopLevelDestination(
-    val route: Any,
+    val route: AppRoute,
     val label: String,
     val icon: DrawableResource,
     val debugOnly: Boolean = false

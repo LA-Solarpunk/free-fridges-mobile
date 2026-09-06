@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.selectable
@@ -51,7 +51,11 @@ actual fun AppBottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
+                    // systemBars, not safeDrawing: safeDrawing includes the IME, and
+                    // ContentView.swift hands the keyboard inset to Compose, so the bar
+                    // would ride up on top of the keyboard. Android's NavigationBar
+                    // (NavigationBarDefaults.windowInsets) uses systemBars too.
+                    WindowInsets.systemBars.only(
                         WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
                     )
                 )

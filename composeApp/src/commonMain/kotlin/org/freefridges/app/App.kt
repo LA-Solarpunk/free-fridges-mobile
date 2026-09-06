@@ -1,8 +1,11 @@
 package org.freefridges.app
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +25,7 @@ import org.freefridges.app.ui.AppBottomBar
 import org.freefridges.app.ui.DebugScreen
 import org.freefridges.app.ui.FridgesScreen
 import org.freefridges.app.ui.MapScreen
+import org.freefridges.app.ui.theme.FreeFridgesTheme
 
 /**
  * Root of the shared UI.
@@ -32,7 +36,7 @@ import org.freefridges.app.ui.MapScreen
  */
 @Composable
 fun App(isDebugBuild: Boolean = false) {
-    MaterialTheme {
+    FreeFridgesTheme {
         val navController = rememberNavController()
         val backStackEntry by navController.currentBackStackEntryAsState()
         val tabs = remember(isDebugBuild) {
@@ -64,10 +68,19 @@ fun App(isDebugBuild: Boolean = false) {
                 modifier = Modifier.fillMaxSize()
             ) {
                 // The map draws edge-to-edge under the status bar and only avoids the
-                // bottom bar; MaplibreMap keeps its own overlay controls (attribution,
-                // compass, scale bar) inside the safe area via contentWindowInsets.
+                // bottom bar. Its overlay controls (attribution, compass, scale bar) are
+                // placed from contentWindowInsets, which MaplibreMap reads directly rather
+                // than through the modifier chain — so the bottom side has to be dropped
+                // here, or the bar's inset lands on the map a second time.
                 composable<MapRoute> {
-                    MapScreen(Modifier.padding(bottom = innerPadding.calculateBottomPadding()))
+                    MapScreen(
+                        modifier = Modifier.padding(
+                            bottom = innerPadding.calculateBottomPadding()
+                        ),
+                        contentWindowInsets = WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Horizontal + WindowInsetsSides.Top
+                        )
+                    )
                 }
                 composable<FridgesRoute> { FridgesScreen(Modifier.padding(innerPadding)) }
                 // Registered only in debug builds, so release has no route to it at all.

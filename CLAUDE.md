@@ -84,9 +84,9 @@ iOS Xcode wrapper (`iosApp`) — split apart because AGP 9 no longer allows `com
 
 ### App shell: tabs, navigation, and debug gating
 
-- `App(isDebugBuild)` is the whole shell: a Material 3 `Scaffold` + `AppBottomBar` + `NavHost`. Tabs are
-  declared once in `commonMain/.../navigation/TopLevelDestination.kt` (route, label, icon, `debugOnly`) —
-  add a tab there rather than editing `App.kt` or either bar implementation.
+- `App(isDebugBuild)` is the whole shell: `FreeFridgesTheme` + a Material 3 `Scaffold` + `AppBottomBar` +
+  `NavHost`. Tabs are declared once in `commonMain/.../navigation/TopLevelDestination.kt` (route, label,
+  icon, `debugOnly`) — add a tab there rather than editing `App.kt` or either bar implementation.
 - **The bottom bar is intentionally `expect`/`actual`, not shared** (`commonMain/ui/AppBottomBar.kt` +
   `androidMain`/`iosMain` actuals). Android uses the standard Material3 `NavigationBar` (80dp, selection
   pill). iOS uses a hand-rolled bar at UIKit's 49dp content height with the icon/label pair centered and
@@ -95,7 +95,15 @@ iOS Xcode wrapper (`iosApp`) — split apart because AGP 9 no longer allows `com
   presentation differs.
 - Routes are type-safe `@Serializable` objects in `navigation/Destinations.kt`, which is why `composeApp`
   applies `org.jetbrains.kotlin.plugin.serialization`. The `kotlinx-serialization-core` runtime arrives
-  transitively via navigation-compose; only the compiler plugin is applied explicitly.
+  transitively via navigation-compose; only the compiler plugin is applied explicitly. Every route also
+  implements the `sealed interface AppRoute` — navigation's route API takes `Any` and resolves the
+  serializer at runtime, so without that marker a route that forgot `@Serializable` or its `composable<T>`
+  registration compiles fine and crashes on first tap. Declare new routes in that file so they get it.
+- **Theme and dark mode**: `commonMain/ui/theme/Theme.kt` holds `FreeFridgesTheme`, which follows
+  `isSystemInDarkTheme()` and publishes the result as `LocalIsDarkTheme`. Anything that has to pick a
+  light/dark asset for itself — currently just the map style — should read that composition local rather
+  than calling `isSystemInDarkTheme()` again, so it still tracks if the theme is ever forced. The color
+  schemes are the M3 baselines; a brand palette drops in there without touching call sites.
 - **Debug gating**: `isDebugBuild` is passed in by each platform shell (`BuildConfig.DEBUG` on Android —
   hence `buildFeatures { buildConfig = true }` in `androidApp`; `#if DEBUG` in `ContentView.swift` on iOS).
   `App.kt` uses it twice: to filter the tab list *and* to skip registering `composable<DebugRoute>`, so a
@@ -135,14 +143,25 @@ iOS Xcode wrapper (`iosApp`) — split apart because AGP 9 no longer allows `com
     CoreGraphics, CoreText, Foundation, ImageIO, Metal, QuartzCore) because the framework is static.
     Omitting them still lets `linkDebugFrameworkIosSimulatorArm64` pass and fails only at Xcode link time
     with undefined C++/zlib/Metal symbols.
-  - The map style is OpenFreeMap Liberty (free, no API key). Its attribution obligation is met by the
-    default `MapOverlay` — replacing the overlay means rendering attribution yourself.
+  - The map style is OpenFreeMap Liberty in light mode and OpenFreeMap Dark in dark mode (free, no API
+    key), selected in `MapScreen` from `LocalIsDarkTheme`. Both styles pull the same `/planet` TileJSON,
+    which is where the attribution string actually comes from — so the obligation is met identically by
+    the default `MapOverlay`, and replacing the overlay means rendering attribution yourself.
+  - `MaplibreMap` places its overlay controls from `contentWindowInsets` **in its own measure policy**, not
+    through the modifier chain, so neither `Modifier.padding` nor `consumeWindowInsets` on the map has any
+    effect on them. A caller that has already inset the map away from a system bar (as `App.kt` does for
+    the bottom bar) must drop that side from `contentWindowInsets` or the inset is applied twice and the
+    attribution/logo/scale bar float above the map's edge.
 - **iOS deployment target 15.3** (raised from 15.0 to match the only configuration MapLibre tests).
 - `iosApp/Info.plist` must keep `CADisableMinimumFrameDurationOnPhone = true`. Compose UI hard-asserts on it
   at startup, so without it the app throws an uncaught Kotlin exception and dies before drawing a frame —
   and `xcrun simctl launch` without `--console-pty` shows nothing but a return to the home screen.
-- `MainActivity` calls `enableEdgeToEdge(statusBarStyle = SystemBarStyle.light(...))` because the map draws
-  under the status bar and the default light icons are unreadable over the light map style.
+- `MainActivity` passes `SystemBarStyle.auto(TRANSPARENT, TRANSPARENT)` for **both** bars. The app paints
+  under both (map under the status bar, `NavigationBar` under the navigation bar), so any scrim would show
+  through; `auto` takes the icon tint from the night-mode configuration, which is the same signal
+  `FreeFridgesTheme` follows. Leaving `navigationBarStyle` at its default is the bug this replaced — its
+  scrim and dark-mode icon tint are wrong against an app-drawn bar. `androidApp/src/main/res/values-night/`
+  carries the dark window-background theme so there's no white flash before the first frame.
 - `ContentView.swift` uses **`.ignoresSafeArea()`**, not `.ignoresSafeArea(.keyboard)`. Insetting the
   Compose view in SwiftUI stops the Compose canvas above the home indicator, so the navigation bar's
   background stops there too and the white window background shows through as a ~100px gap under the tab

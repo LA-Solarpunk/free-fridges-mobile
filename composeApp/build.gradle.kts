@@ -49,7 +49,6 @@ kotlin {
             implementation(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.maplibre.compose)
-            implementation(libs.maplibre.compose.material3)
         }
 
         androidMain.dependencies {
