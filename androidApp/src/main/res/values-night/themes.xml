@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark counterpart of values/themes.xml: keeps the window background behind the
+         Compose content dark so there is no white flash before the first frame. -->
+    <style name="Theme.FreeFridges" parent="android:Theme.Material.NoActionBar" />
+</resources>

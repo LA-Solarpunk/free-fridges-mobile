@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -12,6 +13,13 @@ kotlin {
         namespace = "org.freefridges.app.shared"
         compileSdk = 37
         minSdk = 26
+
+        // Off by default for com.android.kotlin.multiplatform.library. Without it
+        // `variant.sources.assets` is null, so the Compose resources plugin silently
+        // never packages composeResources/ into the AAR and the tab icons don't load.
+        androidResources {
+            enable = true
+        }
 
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
@@ -38,7 +46,23 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation(libs.androidx.navigation.compose)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.maplibre.compose)
+        }
+
+        androidMain.dependencies {
+            // WindowInsetsControllerCompat, for the system-bar icon tint in
+            // ui/theme/SystemUiTheme.android.kt.
+            implementation(libs.androidx.core.ktx)
+            // Render backend for MapLibre on Android. OpenGL rather than Vulkan: it is the
+            // MapLibre demo app's own default and the safer pick at minSdk 26.
+            runtimeOnly(libs.maplibre.compose.runtime.opengl.android)
         }
     }
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "org.freefridges.app.generated.resources"
 }

@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!--
+      Two-door fridge: a rounded body, a full-width divider splitting freezer from
+      fridge, and a handle stroke on each door. Drawn with evenOdd so the divider and
+      handles punch through the body regardless of subpath winding. Same glyph family
+      as the launcher icon in androidApp/src/main/res/drawable/ic_launcher_foreground.xml.
+    -->
+    <path
+        android:fillColor="#FF000000"
+        android:fillType="evenOdd"
+        android:pathData="M7,2h10q2,0 2,2v16q0,2 -2,2h-10q-2,0 -2,-2v-16q0,-2 2,-2zM5,9v1.2h14v-1.2zM15.2,5.5v2.5h1.2v-2.5zM15.2,11.2v2.8h1.2v-2.8z" />
+</vector>
