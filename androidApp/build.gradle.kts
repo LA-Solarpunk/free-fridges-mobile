@@ -16,6 +16,11 @@ android {
         versionName = "1.0"
     }
 
+    buildFeatures {
+        // Needed for BuildConfig.DEBUG, which gates the debug-only tab.
+        buildConfig = true
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"

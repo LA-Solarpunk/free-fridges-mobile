@@ -3,7 +3,12 @@ import ComposeApp
 
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
+        #if DEBUG
+        let isDebug = true
+        #else
+        let isDebug = false
+        #endif
+        return MainViewControllerKt.MainViewController(isDebugBuild: isDebug)
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
@@ -11,7 +16,10 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     var body: some View {
+        // Draw edge-to-edge. Insetting here would stop the Compose canvas above the home
+        // indicator, leaving the window background showing below the navigation bar;
+        // Compose applies the safe area itself (Scaffold/NavigationBar window insets).
         ComposeView()
-            .ignoresSafeArea(.keyboard)
+            .ignoresSafeArea()
     }
 }
