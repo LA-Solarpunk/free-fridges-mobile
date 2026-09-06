@@ -31,12 +31,3 @@ fun FridgesScreen(modifier: Modifier = Modifier) {
         modifier = modifier
     )
 }
-
-@Composable
-fun DebugScreen(modifier: Modifier = Modifier) {
-    PlaceholderScreen(
-        title = "Debug",
-        subtitle = "Debug builds only.",
-        modifier = modifier
-    )
-}

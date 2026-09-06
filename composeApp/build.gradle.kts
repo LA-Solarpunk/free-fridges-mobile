@@ -52,6 +52,9 @@ kotlin {
         }
 
         androidMain.dependencies {
+            // WindowInsetsControllerCompat, for the system-bar icon tint in
+            // ui/theme/SystemUiTheme.android.kt.
+            implementation(libs.androidx.core.ktx)
             // Render backend for MapLibre on Android. OpenGL rather than Vulkan: it is the
             // MapLibre demo app's own default and the safer pick at minSdk 26.
             runtimeOnly(libs.maplibre.compose.runtime.opengl.android)

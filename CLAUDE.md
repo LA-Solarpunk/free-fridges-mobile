@@ -99,16 +99,27 @@ iOS Xcode wrapper (`iosApp`) — split apart because AGP 9 no longer allows `com
   implements the `sealed interface AppRoute` — navigation's route API takes `Any` and resolves the
   serializer at runtime, so without that marker a route that forgot `@Serializable` or its `composable<T>`
   registration compiles fine and crashes on first tap. Declare new routes in that file so they get it.
-- **Theme and dark mode**: `commonMain/ui/theme/Theme.kt` holds `FreeFridgesTheme`, which follows
-  `isSystemInDarkTheme()` and publishes the result as `LocalIsDarkTheme`. Anything that has to pick a
-  light/dark asset for itself — currently just the map style — should read that composition local rather
-  than calling `isSystemInDarkTheme()` again, so it still tracks if the theme is ever forced. The color
-  schemes are the M3 baselines; a brand palette drops in there without touching call sites.
+- **Theme and dark mode**: `commonMain/ui/theme/Theme.kt` holds `ThemeMode` (System/Light/Dark) and
+  `FreeFridgesTheme`, which resolves the mode against `isSystemInDarkTheme()` and publishes the result as
+  `LocalIsDarkTheme`. Anything that has to pick a light/dark asset for itself — currently just the map
+  style — should read that composition local rather than calling `isSystemInDarkTheme()` again, so it
+  follows an override too. The color schemes are the M3 baselines; a brand palette drops in there without
+  touching call sites.
+  - `App` owns the `ThemeMode` in a `rememberSaveable` (enums need a `Saver` — `ThemeMode.Saver`) and the
+    debug screen is the only thing that can change it, so a release build is always `System`.
+  - **`ApplySystemUiTheme(themeMode, darkTheme)` is `expect`/`actual`** (`ui/theme/SystemUiTheme.kt` +
+    actuals), because the status/navigation bar icon tint is platform chrome that Compose can't set.
+    Android re-asserts it through `WindowInsetsControllerCompat` — `enableEdgeToEdge` picks it once from
+    the night-mode config, which goes stale the moment the mode overrides the system. iOS sets the
+    window's `overrideUserInterfaceStyle` via `UIWindowScene.keyWindow`, which is what the status bar text
+    color derives from. It takes the *mode* as well as the resolved boolean on purpose: `System` has to map
+    to `Unspecified` on iOS, since pinning the current value would stop the trait tracking the OS.
 - **Debug gating**: `isDebugBuild` is passed in by each platform shell (`BuildConfig.DEBUG` on Android —
   hence `buildFeatures { buildConfig = true }` in `androidApp`; `#if DEBUG` in `ContentView.swift` on iOS).
   `App.kt` uses it twice: to filter the tab list *and* to skip registering `composable<DebugRoute>`, so a
   release build has no route to the debug screen at all. Hang new debug-only surfaces off `DebugRoute`
-  rather than inventing another gating mechanism.
+  rather than inventing another gating mechanism — `ui/DebugScreen.kt` is the settings surface, currently
+  just the light/dark override.
 - Tab icons are Compose Multiplatform resources (Android vector XML) in
   `composeApp/src/commonMain/composeResources/drawable/`, referenced via the generated `Res.drawable.*`.
   Don't reach for `androidx.compose.material.icons` — `material-icons-core` is only on the Android side of
@@ -156,11 +167,15 @@ iOS Xcode wrapper (`iosApp`) — split apart because AGP 9 no longer allows `com
 - `iosApp/Info.plist` must keep `CADisableMinimumFrameDurationOnPhone = true`. Compose UI hard-asserts on it
   at startup, so without it the app throws an uncaught Kotlin exception and dies before drawing a frame —
   and `xcrun simctl launch` without `--console-pty` shows nothing but a return to the home screen.
+- `androidx.core` is a direct `composeApp/androidMain` dependency purely for
+  `WindowInsetsControllerCompat`; it was already arriving transitively via compose-ui, but at whatever
+  version that pulled.
 - `MainActivity` passes `SystemBarStyle.auto(TRANSPARENT, TRANSPARENT)` for **both** bars. The app paints
   under both (map under the status bar, `NavigationBar` under the navigation bar), so any scrim would show
   through; `auto` takes the icon tint from the night-mode configuration, which is the same signal
-  `FreeFridgesTheme` follows. Leaving `navigationBarStyle` at its default is the bug this replaced — its
-  scrim and dark-mode icon tint are wrong against an app-drawn bar. `androidApp/src/main/res/values-night/`
+  `FreeFridgesTheme` follows — it is only the *initial* value, since `ApplySystemUiTheme` re-asserts the
+  tint whenever `ThemeMode` overrides the system. Leaving `navigationBarStyle` at its default is the bug
+  this replaced — its scrim and dark-mode icon tint are wrong against an app-drawn bar. `androidApp/src/main/res/values-night/`
   carries the dark window-background theme so there's no white flash before the first frame.
 - `ContentView.swift` uses **`.ignoresSafeArea()`**, not `.ignoresSafeArea(.keyboard)`. Insetting the
   Compose view in SwiftUI stops the Compose canvas above the home indicator, so the navigation bar's
