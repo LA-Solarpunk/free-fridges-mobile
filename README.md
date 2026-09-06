@@ -1,4 +1,4 @@
-# Free Fridges
+# Free Fridges Mobile
 
 [![Xcode 26.6](https://img.shields.io/badge/Xcode-26.6-147EFB?logo=xcode&logoColor=white)](https://developer.apple.com/xcode/)
 [![iOS 15.3+](https://img.shields.io/badge/iOS-15.3%2B-000000?logo=apple&logoColor=white)](iosApp/)
